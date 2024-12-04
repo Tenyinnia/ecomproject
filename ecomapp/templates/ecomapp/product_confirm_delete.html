@@ -1,0 +1,21 @@
+
+{% extends 'ecomapp/base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'ecomapp/css/style.css' %}">
+{% block title %}Delete{% endblock title %}
+{% block content %}
+
+<div class ="delete-container">
+    <div class="delete-content">
+        <p>Are you sure you want to delete "<span class = 'object-content'>{{ object }}</span>"?</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class='btn-group'>
+                <button class= 'btn btn-delete' type="submit">Delete</button>
+                <button class= 'btn btn-cancel' type="submit"><a  href="{% url 'home' %}">Cancel</a></button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+ 

@@ -1,0 +1,14 @@
+{% extends "ecomapp/base.html" %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'ecomapp/css/style.css' %}">
+{% block title %}login{% endblock title %}
+{% block content %}
+
+    <h2>Login</h2>
+    <form method="POST" class="styled-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class ="btn btn-warning rounded-pill btn-sm text-white">Login</button>
+    </form>
+    <p class="question-login">Don't have an account? <a href="{% url 'signup' %}">Signup here</a></p>
+{% endblock content %}

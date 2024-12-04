@@ -1,0 +1,16 @@
+{% extends 'ecomapp/base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'ecomapp/css/style.css' %}">
+{% block title %} 
+Add product
+{% endblock title %}
+{% block content %}
+    <h2 class='product-form'>Stock Keeping</h2>
+    <form method ='post' enctype="multipart/form-data" class ="styled-form">
+      {%csrf_token%}
+      <table>
+        {{form.as_table}}
+      </table>
+      <button type = 'submit' class='btn inventory-btn'>ADD</button>
+    </form>
+ {% endblock content %}

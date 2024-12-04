@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="media/images/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <link rel="stylesheet" href="{% static 'ecomapp/css/style.css' %}">
+    <header>
+        <div class="container">
+            <div class = 'content'>
+                <a class="navbar-brand" href="{% url 'home' %}">
+                    <img src="media/images/logo.jpeg" alt="Home" height="50px" width = "50px">
+                </a>
+            </div>   
+            <nav class="nav bg-info">
+                <div class ="nav content"
+                    <li class="nav-item">
+                    <a class="nav-link link-light" href="{% url 'home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                    <a class="nav-link link-light" href="{% url 'product_upload' %}">Inventory</a>
+                    </li>
+                    <li class="nav-item">
+                    <a class="nav-link link-light" href="{% url 'about_us' %}">About Us</a>
+                    </li>
+                    
+                    {% if user.is_authenticated and user.is_staff %}
+                    <li class="nav-item">Welcome Superuser</li>
+                    <li class="nav-item">
+                        <a class="nav-link link-light" href="{% url 'admin:index' %}">Admin</a>
+                    </li>
+                    {% endif %}
+    
+                </div>
+                <div class ="nav content">
+                    <li class="nav-item">
+                        {% if user.is_authenticated %}
+                            
+                            <li class="nav-item">Welcome {{ user.username }}</li>
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="{% url 'logout' %}">Logout</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link link-light" href="{% url 'signup' %}">Sign up</a>|<a class="nav-link link-light" href={% url 'login' %}>Login</a>
+                            </li>
+                        {% endif %}
+                        {% if user.is_authenticated and user.is_superuser %}
+                        <li class="nav-item">Welcome Superuser</li>
+                        <li class="nav-item">
+                            <a class="nav-link link-light" href="{% url 'admin:index' %}">Super User</a>
+                        </li>
+                        {% endif %}
+                    </li>
+                </div>
+            </nav>
+        </div>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class = 'container-fluid'>
+        <p class = "footer-text-item">&copy; {{ current_year }} e-Commerce website</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

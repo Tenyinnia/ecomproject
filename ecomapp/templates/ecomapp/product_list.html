@@ -1,0 +1,118 @@
+
+{% extends 'ecomapp/base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'ecomapp/css/style.css' %}">
+{% block title %}Gallery{% endblock title%} 
+{% block content %}
+
+<!-- Load icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">   
+<!-- The form -->
+<form class="example" action="action_page.php">
+  <input type="text" placeholder="Product Search.." name="search">
+  <button type="submit"><i class="fa fa-search"></i></button>
+</form>
+<div class = "view-cart">
+  <div class="cart-icon">
+    <a href ="{% url 'cart' %}"><i class="fa-solid fa-cart-shopping"></i><span class='cart-count'id="cart-count">0</span></a>
+  </div>
+     <h1 class="text-right">Gallery</h1>
+        <div class="row">
+          {% for product in product_list %}
+            <div  class="col-md-3 mb-4"> <!-- 4 columns on medium and larger screens -->
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <p><img src = "{{product.image.url }}" class= "card-body img" alt="{{product.productName}}_image"></p>
+                        <div class="card-body contents"><h5 class="card-title">{{ product.productName }}</h5>
+                        <p class="card-amount">${{ product.price|floatformat:2 }}</p>
+                    </div>
+                        {% if product.stock > 0 %}
+                        <p class="stock">In stock: {{ product.stock }}</p>
+                        <button onclick="addToCart({{ product.id }})"class = "btn btn-warning rounded-pill btn-sm text-white" style="background-color: blue;" data-id = "({{ prouct.id }})">Add to Cart</button>
+                        <a href="{% url 'update' product.id %}" class=" staff-crud" style="background-color: yellow;">Edit</a>
+                        <a href="{% url 'delete' product.id %}" class="staff-crud" style="background-color: red;">Delete</a>
+                        {% else %}.
+                        <p class="out-of-stock">Out of Stock</p>
+                        
+                        {% endif %}
+                </div>
+            </div>
+        </div>
+    
+      {% endfor %}
+    </div>
+</div>
+<script>
+  $(document).ready(function () {
+      // Update Cart Count
+      function updateCartCount() {
+          $.get("{% url 'cart-count' %}", function (data) {
+              $("#cart-count").text(data.cart_count);
+          });
+      }
+
+      // Add to Cart
+      $(".add-to-cart").on("click", function () {
+          const productId = $(this).data("id");
+
+          $.ajax({
+              url: `/add-to-cart/${productId}/`,
+              method: "GET",
+              success: function (data) {
+                  updateCartCount();
+                  alert("Item added to cart!");
+              },
+              error: function (xhr) {
+                  alert(xhr.responseJSON.error);
+              }
+          });
+      });
+
+      // Initialize Cart Count
+      updateCartCount();
+  });
+</script>
+
+<!-- Include Bootstrap JS (Optional) -->
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  // Function to add a product to the cart
+  function addToCart(productId) {
+      // Send an AJAX request to the server
+      $.ajax({
+          url: `/add-to-cart/${productId}/`, // URL to the `add_to_cart` view
+          method: "GET",
+          success: function (response) {
+              // Successfully added to cart
+              alert("Product added to cart!");
+              updateCartCount(response.cart_count); // Update the cart count in the UI
+          },
+          error: function (xhr) {
+              // Error while adding to cart
+              if (xhr.responseJSON && xhr.responseJSON.error) {
+                  alert(xhr.responseJSON.error);
+              } else {
+                  alert("An error occurred. Please try again.");
+              }
+          }
+      });
+  }
+
+  // Function to update the cart count in the UI
+  function updateCartCount(cartCount) {
+      const cartCountElement = document.getElementById("cart-count");
+      if (cartCountElement) {
+          cartCountElement.textContent = cartCount; // Update the cart count display
+      }
+  }
+
+  // Initial cart count fetch
+  $(document).ready(function () {
+      // Fetch the initial cart count when the page loads
+      $.get("/cart-count/", function (data) {
+          updateCartCount(data.cart_count); // Set the initial cart count
+      });
+  });
+</script>
+{% endblock content %}
