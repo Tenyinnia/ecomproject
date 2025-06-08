@@ -38,6 +38,22 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'ecomapp',
+    'taggit',
+    'rest_framework',
+    'smart_selects',
+    'wagtail',  # Instead of 'wagtail.core'
+    'wagtail.admin',
+    'wagtail.documents',
+    'wagtail.snippets',
+    'wagtail.users',
+    'wagtail.images',
+    'wagtail.embeds',
+    'wagtail.search',
+    'wagtail.sites',
+    'wagtail.contrib.forms',
+    'wagtail.contrib.redirects',
+    'wagtail_modeladmin',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [
@@ -51,7 +67,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'ecomproject.urls'
-
+ 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -63,6 +79,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'ecomapp.context_processors.shared_context',
+                'ecomapp.context_processors.cart_context'
             ],
         },
     },
@@ -76,10 +94,12 @@ WSGI_APPLICATION = 'ecomproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ecomapps',
-        'USER': 'root',
+        'USER': 'postgres',
         'PASSWORD': 'Mysonchimam&chisom@123455',
+        'HOST': 'localhost',
+        'PORT': "5432",
     }
 }
 
@@ -102,7 +122,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',  # Needed for browsable API
+    ]
+}
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -119,6 +144,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
@@ -126,3 +154,69 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+JAZZMIN_SETTINGS = {
+    "site_title": "My Admin",
+    "site_header": "My Admin Panel",
+    "theme": "cyborg",  # Bootstrap themes like "darkly", "solar", etc.
+}
+SITE_ID = 1
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = 'your_google_client_id'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'your_google_client_secret'
+
+SOCIAL_AUTH_MICROSOFT_OAUTH2_KEY = 'your_microsoft_client_id'
+SOCIAL_AUTH_MICROSOFT_OAUTH2_SECRET = 'your_microsoft_client_secret'
+
+LOGIN_REDIRECT_URL = "/force-password-change/"  # Or the page you want to redirect after login
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'smartlearnk12@gmail.com'  # Replace with your email
+EMAIL_HOST_PASSWORD = 'wxzo hbzb rttr xuvy'  # Replace with your email password
+DEFAULT_FROM_EMAIL = 'smartlearnk12@gmail.com'
+
+
+AUTHENTICATION_BACKENDS = [
+    'ecomapp.authentication.EmailAuthBackend',  # Replace 'yourapp' with your actual app name
+    'django.contrib.auth.backends.ModelBackend',
+]
+#For Reset password gen link
+MY_APP_DOMAIN = "http://127.0.0.1:8000"
+SITE_URL = "http://127.0.0.1:8000" #Change to domain name during production
+SITE_ID = 1
+DEFAULT_DOMAIN = "http://127.0.0.1:8000"
+# Fix the email link issue
+PASSWORD_RESET_TIMEOUT = 86400 
+
+#Automatic session timeout
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # Default session age (30 days)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False # Logout on browser close
+SESSION_SAVE_EVERY_REQUEST = True
+CSRF_COOKIE_SECURE = False
+SESSION_ENGINE = "django.contrib.sessions.backends.db"  # Default session storage
+ 
+AUTH_USER_MODEL = 'ecomapp.CustomUser'
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5000 * 1024 * 1024  # 50MB limit
+
+WAGTAILADMIN_BASE_URL = 'http://localhost:8000' 
+
+CART_SECURITY = {
+    'MAX_ITEMS': 50,
+    'MAX_QUANTITY_PER_ITEM': 10,
+    'SESSION_TIMEOUT': 3600 * 24 * 7,  # 1 week
+    'ANONYMOUS_CART_LIFETIME': 3600 * 24 * 30  # 30 days
+}
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # If behind a proxy (e.g., Nginx, Cloudflare)
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'ecomapp.validators.CustomPasswordValidator',  # Replace with the actual path
+    },
+]
+
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_CART_DB = 0

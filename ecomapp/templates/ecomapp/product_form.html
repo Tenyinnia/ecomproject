@@ -1,16 +1,383 @@
-{% extends 'ecomapp/base.html' %}
+{% extends "ecomapp/base.html" %}
 {% load static %}
-<link rel="stylesheet" href="{% static 'ecomapp/css/style.css' %}">
-{% block title %} 
-Add product
-{% endblock title %}
+
+{% block extrastyle %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    /* Main form styling */
+    .product-form {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    /* Section styling */
+    .form-section {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        margin-bottom: 25px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-section h2 {
+        color: #3a3a3a;
+        font-size: 1.2rem;
+        margin-top: 0;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    /* Form row styling */
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+        align-items: center;
+    }
+    
+    .form-row label {
+        width: 200px;
+        font-weight: 600;
+        color: #555;
+    }
+    
+    .form-row .form-field {
+        flex: 1;
+        min-width: 250px;
+    }
+    
+    /* Input styling */
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+    
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #4a90e2;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    }
+    
+    /* File input styling */
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+    }
+    
+    .file-input-wrapper input[type="file"] {
+        position: absolute;
+        font-size: 100px;
+        opacity: 0;
+        right: 0;
+        top: 0;
+    }
+    
+    .file-input-btn {
+        display: inline-block;
+        padding: 8px 15px;
+        background: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #555;
+    }
+    
+    .file-input-btn:hover {
+        background: #e0e0e0;
+    }
+    
+    /* Price fields */
+    .price-fields {
+        display: flex;
+        gap: 20px;
+    }
+    
+    .price-field {
+        flex: 1;
+    }
+    
+    /* Submit button */
+    .submit-row {
+        padding: 20px 0;
+        text-align: right;
+    }
+    
+    .submit-row button {
+        padding: 10px 20px;
+        background: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s;
+    }
+    
+    .submit-row button:hover {
+        background: #3a7bc8;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .form-row label {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        .price-fields {
+            flex-direction: column;
+            gap: 15px;
+        }
+    }
+    
+    /* Tag input styling */
+    .tag-input {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+        min-height: 40px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-    <h2 class='product-form'>Stock Keeping</h2>
-    <form method ='post' enctype="multipart/form-data" class ="styled-form">
-      {%csrf_token%}
-      <table>
-        {{form.as_table}}
-      </table>
-      <button type = 'submit' class='btn inventory-btn'>ADD</button>
+<div class="product-form">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h2><i class="fas fa-info-circle"></i> Basic Information</h2>
+            
+            <div class="form-row">
+                <label for="id_name">Product Name*</label>
+                <div class="form-field">
+                    {{ form.name }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_sku">SKU*</label>
+                <div class="form-field">
+                    {{ form.sku }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_description">Description*</label>
+                <div class="form-field">
+                    {{ form.description }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_tags">Tags</label>
+                <div class="form-field tag-input">
+                    {{ form.tags }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category & Brand Section -->
+        <div class="form-section">
+            <h2><i class="fas fa-tags"></i> Category & Brand</h2>
+            
+            <div class="form-row">
+                <label for="id_category">Category*</label>
+                <div class="form-field">
+                    {{ form.category }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_subcategory">Subcategory</label>
+                <div class="form-field">
+                    {{ form.subcategory }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_brand">Brand</label>
+                <div class="form-field">
+                    {{ form.brand }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_gender">Gender</label>
+                <div class="form-field">
+                    {{ form.gender }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_color">Color</label>
+                <div class="form-field">
+                    {{ form.color }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pricing & Inventory Section -->
+        <div class="form-section">
+            <h2><i class="fas fa-dollar-sign"></i> Pricing & Inventory</h2>
+            
+            <div class="price-fields">
+                <div class="form-row price-field">
+                    <label for="id_price">Price*</label>
+                    <div class="form-field">
+                        {{ form.price }}
+                    </div>
+                </div>
+                
+                <div class="form-row price-field">
+                    <label for="id_discounted_price">Discounted Price</label>
+                    <div class="form-field">
+                        {{ form.discounted_price }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_quantity">Quantity*</label>
+                <div class="form-field">
+                    {{ form.quantity }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shipping & Location Section -->
+        <div class="form-section">
+            <h2><i class="fas fa-truck"></i> Shipping & Location</h2>
+            
+            <div class="form-row">
+                <label for="id_location">Location*</label>
+                <div class="form-field">
+                    {{ form.location }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="id_delivery_time">Delivery Time*</label>
+                <div class="form-field">
+                    {{ form.delivery_time }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Media Section -->
+        <div class="form-section">
+            <h2><i class="fas fa-images"></i> Media</h2>
+            
+            <div class="form-row">
+                <label for="id_image">Product Image</label>
+                <div class="form-field">
+                    <div class="file-input-wrapper">
+                        <button type="button" class="file-input-btn">
+                            <i class="fas fa-upload"></i> Choose File
+                        </button>
+                        {{ form.image }}
+                        <span id="file-name" style="margin-left: 10px;">No file chosen</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Section -->
+        <div class="submit-row">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Product
+            </button>
+        </div>
     </form>
- {% endblock content %}
+</div>
+
+<script>
+    // Display selected file name
+    document.getElementById('id_image').addEventListener('change', function(e) {
+        var fileName = e.target.files[0] ? e.target.files[0].name : "No file chosen";
+        document.getElementById('file-name').textContent = fileName;
+    });
+    
+    // Dynamic subcategory loading based on category selection
+    document.getElementById('id_category').addEventListener('change', function() {
+        var categoryId = this.value;
+        var subcategorySelect = document.getElementById('id_subcategory');
+        
+        if (categoryId) {
+            // You would typically make an AJAX call here to fetch subcategories
+            // This is a placeholder for the actual implementation
+            console.log("Category changed to:", categoryId);
+            // Example: fetch(`/api/subcategories/?category_id=${categoryId}`)
+            //           .then(response => response.json())
+            //           .then(data => updateSubcategories(data));
+        } else {
+            subcategorySelect.innerHTML = '<option value="">---------</option>';
+        }
+    });
+    
+    function updateSubcategories(data) {
+        var subcategorySelect = document.getElementById('id_subcategory');
+        subcategorySelect.innerHTML = '<option value="">---------</option>';
+        
+        data.forEach(function(subcategory) {
+            var option = document.createElement('option');
+            option.value = subcategory.id;
+            option.textContent = subcategory.name;
+            subcategorySelect.appendChild(option);
+        });
+    }
+     // In your template's JavaScript section
+document.addEventListener('DOMContentLoaded', function() {
+  // Dynamic subcategory loading
+  const categorySelect = document.getElementById('id_category');
+  const subcategorySelect = document.getElementById('id_subcategory');
+  
+  if (categorySelect && subcategorySelect) {
+      categorySelect.addEventListener('change', function() {
+          const categoryId = this.value;
+          if (categoryId) {
+              fetch(`/admin/get_subcategories/?category_id=${categoryId}`)
+                  .then(response => response.json())
+                  .then(data => {
+                      subcategorySelect.innerHTML = '';
+                      data.subcategories.forEach(subcategory => {
+                          const option = document.createElement('option');
+                          option.value = subcategory.id;
+                          option.textContent = subcategory.name;
+                          subcategorySelect.appendChild(option);
+                      });
+                  });
+          } else {
+              subcategorySelect.innerHTML = '<option value="">---------</option>';
+          }
+      });
+  }
+  
+  // File name display
+  const fileInput = document.getElementById('id_image');
+  const fileNameDisplay = document.getElementById('file-name');
+  
+  if (fileInput && fileNameDisplay) {
+      fileInput.addEventListener('change', function() {
+          fileNameDisplay.textContent = this.files[0] ? this.files[0].name : 'No file chosen';
+      });
+  }
+});
+</script>
+{% endblock %}

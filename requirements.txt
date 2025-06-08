@@ -1,0 +1,13 @@
+django-taggit
+chainlit
+django
+wagtail
+wagtail-modeladmin
+redis
+celery
+pyscopg2
+django-smart-selects
+django-phonenumber-field
+phonenumbers
+django_countries
+

@@ -1,118 +1,213 @@
-
-{% extends 'ecomapp/base.html' %}
+{% extends "ecomapp/base.html" %}
 {% load static %}
-<link rel="stylesheet" href="{% static 'ecomapp/css/style.css' %}">
-{% block title %}Gallery{% endblock title%} 
-{% block content %}
+{% load humanize %}
 
-<!-- Load icon library -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">   
-<!-- The form -->
-<form class="example" action="action_page.php">
-  <input type="text" placeholder="Product Search.." name="search">
-  <button type="submit"><i class="fa fa-search"></i></button>
-</form>
-<div class = "view-cart">
-  <div class="cart-icon">
-    <a href ="{% url 'cart' %}"><i class="fa-solid fa-cart-shopping"></i><span class='cart-count'id="cart-count">0</span></a>
-  </div>
-     <h1 class="text-right">Gallery</h1>
-        <div class="row">
-          {% for product in product_list %}
-            <div  class="col-md-3 mb-4"> <!-- 4 columns on medium and larger screens -->
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <p><img src = "{{product.image.url }}" class= "card-body img" alt="{{product.productName}}_image"></p>
-                        <div class="card-body contents"><h5 class="card-title">{{ product.productName }}</h5>
-                        <p class="card-amount">${{ product.price|floatformat:2 }}</p>
+{% block content %}
+<main class="container mx-auto px-4 py-6">
+    <!-- Search Header -->
+    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">
+            {% if query %}
+                Search Results for "{{ query }}"
+            {% elif current_category %}
+                {{ current_category.name }}
+            {% else %}
+                All Products
+            {% endif %}
+            <span class="text-sm font-normal text-gray-500">({{ products.paginator.count }} products found)</span>
+        </h1>
+
+        {% if query and not products %}
+        <div class="mt-4 text-center py-10">
+            <i class="fas fa-search text-4xl text-gray-300 mb-3"></i>
+            <h3 class="text-lg font-medium text-gray-500">No products found for "{{ query }}"</h3>
+            <p class="text-gray-400">Try different keywords or browse our categories</p>
+            <a href="{% url 'product_list' %}" class="mt-4 inline-block text-orange-600 hover:text-orange-800">
+                View all products
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Product Grid -->
+    {% if products %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for product in products %}
+        <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div class="relative">
+                <a href="{% url 'product_detail' product.slug %}">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.title }}" class="w-full h-48 object-cover">
+                    {% else %}
+                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-400">No Image</span>
                     </div>
-                        {% if product.stock > 0 %}
-                        <p class="stock">In stock: {{ product.stock }}</p>
-                        <button onclick="addToCart({{ product.id }})"class = "btn btn-warning rounded-pill btn-sm text-white" style="background-color: blue;" data-id = "({{ prouct.id }})">Add to Cart</button>
-                        <a href="{% url 'update' product.id %}" class=" staff-crud" style="background-color: yellow;">Edit</a>
-                        <a href="{% url 'delete' product.id %}" class="staff-crud" style="background-color: red;">Delete</a>
-                        {% else %}.
-                        <p class="out-of-stock">Out of Stock</p>
-                        
+                    {% endif %}
+                </a>
+                
+                <!-- Favorite Button -->
+                {% if user.is_authenticated %}
+                <button class="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-red-50"
+                        hx-post="#"
+                        hx-swap="outerHTML">
+                    <i class="{% if product in user_wishlist %}fas fa-heart text-red-500{% else %}far fa-heart text-gray-400{% endif %}"></i>
+                </button>
+                {% endif %}
+                
+                {% if product.discount_percentage %}
+                <div class="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    -{{ product.discount_percentage }}%
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="p-4">
+                <a href="{% url 'product_detail' product.slug %}" class="block">
+                    <h3 class="font-semibold text-gray-800 mb-1 hover:text-orange-600 line-clamp-2">{{ product.title }}</h3>
+                    <div class="flex items-center mb-2">
+                        {% if product.brand %}
+                        <span class="text-xs text-gray-500">{{ product.name }}</span>
+                        <span class="text-xs text-gray-500">  ({{ product.brand}})</span>
                         {% endif %}
+
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        {% if product.discounted_price %}
+                        <span class="font-bold text-gray-800">₦{{ product.discounted_price|intcomma }}</span>
+                        <span class="text-sm text-gray-500 line-through">₦{{ product.price|intcomma }}</span>
+                        {% else %}
+                        <span class="font-bold text-gray-800">₦{{ product.price|intcomma }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if product.discount_percentage %}
+                    <div class="text-xs text-green-600 mt-1">Save ₦{{ product.price_saving|intcomma }} ({{ product.discount_percentage }}%)</div>
+                    {% endif %}
+                </a>
+                
+                <div class="mt-3 flex justify-between items-center">
+                    <form  class="add-to-cart-form" method="post" data-url="{% url 'add_to_cart' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="w-full bg-orange-600 text-white py-2 px-4 rounded hover:bg-orange-700 text-sm">
+                            Add to Cart
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
-    
-      {% endfor %}
+        {% endfor %}
     </div>
-</div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if products.paginator.num_pages > 1 %}
+    <div class="mt-8 flex justify-center">
+        <nav class="inline-flex rounded-md shadow">
+            {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}{% if query %}&query={{ query }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page' and key != 'query' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                <span class="px-3 py-2 border-t border-b border-gray-300 bg-orange-600 text-white">
+                    {{ num }}
+                </span>
+                {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                <a href="?page={{ num }}{% if query %}&query={{ query }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page' and key != 'query' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-2 border-t border-b border-gray-300 bg-white text-gray-500 hover:bg-gray-50">
+                    {{ num }}
+                </a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}{% if query %}&query={{ query }}{% endif %}{% for key, value in request.GET.items %}{% if key != 'page' and key != 'query' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</main>
+
+<style>
+    .home-navigation {
+        font-size: 14px;
+        color: var(--text-secondary);
+        padding: 15px 5%;
+        background-color: var(--card-bg);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    /* Highlight matching search terms */
+    .search-highlight {
+        background-color: #FFF9C4;
+        padding: 0 2px;
+        border-radius: 2px;
+    }
+</style>
+
 <script>
-  $(document).ready(function () {
-      // Update Cart Count
-      function updateCartCount() {
-          $.get("{% url 'cart-count' %}", function (data) {
-              $("#cart-count").text(data.cart_count);
-          });
-      }
-
-      // Add to Cart
-      $(".add-to-cart").on("click", function () {
-          const productId = $(this).data("id");
-
-          $.ajax({
-              url: `/add-to-cart/${productId}/`,
-              method: "GET",
-              success: function (data) {
-                  updateCartCount();
-                  alert("Item added to cart!");
-              },
-              error: function (xhr) {
-                  alert(xhr.responseJSON.error);
-              }
-          });
-      });
-
-      // Initialize Cart Count
-      updateCartCount();
-  });
+    // Highlight search terms in product titles
+    document.addEventListener('DOMContentLoaded', function() {
+        const query = "{{ query }}";
+        if (query) {
+            const productTitles = document.querySelectorAll('.font-semibold.text-gray-800');
+            const regex = new RegExp(query, 'gi');
+            
+            productTitles.forEach(title => {
+                title.innerHTML = title.textContent.replace(regex, match => 
+                    `<span class="search-highlight">${match}</span>`
+                );
+            });
+        }
+    });
 </script>
-
-<!-- Include Bootstrap JS (Optional) -->
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-  // Function to add a product to the cart
-  function addToCart(productId) {
-      // Send an AJAX request to the server
-      $.ajax({
-          url: `/add-to-cart/${productId}/`, // URL to the `add_to_cart` view
-          method: "GET",
-          success: function (response) {
-              // Successfully added to cart
-              alert("Product added to cart!");
-              updateCartCount(response.cart_count); // Update the cart count in the UI
-          },
-          error: function (xhr) {
-              // Error while adding to cart
-              if (xhr.responseJSON && xhr.responseJSON.error) {
-                  alert(xhr.responseJSON.error);
-              } else {
-                  alert("An error occurred. Please try again.");
-              }
-          }
-      });
-  }
-
-  // Function to update the cart count in the UI
-  function updateCartCount(cartCount) {
-      const cartCountElement = document.getElementById("cart-count");
-      if (cartCountElement) {
-          cartCountElement.textContent = cartCount; // Update the cart count display
-      }
-  }
-
-  // Initial cart count fetch
-  $(document).ready(function () {
-      // Fetch the initial cart count when the page loads
-      $.get("/cart-count/", function (data) {
-          updateCartCount(data.cart_count); // Set the initial cart count
-      });
-  });
-</script>
-{% endblock content %}
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.add-to-cart-form').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+    
+                const formData = new FormData(form);
+                const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+                const url = form.getAttribute('data-url');
+                const feedbackDiv = form.nextElementSibling;
+    
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        feedbackDiv.innerHTML = `<p style="color:green">${data.message}</p>`;
+                        
+                        // ✅ Update cart count
+                        const cartCount = document.getElementById('cart-count');
+                        if (cartCount && data.cart_total !== undefined) {
+                            cartCount.textContent = data.cart_total;
+                        }
+                    } else {
+                        feedbackDiv.innerHTML = `<p style="color:red">${data.error}</p>`;
+                    }
+                })
+                .catch(error => {
+                    feedbackDiv.innerHTML = `<p style="color:red">An error occurred.</p>`;
+                    console.error('Error:', error);
+                });
+            });
+        });
+    });
+    </script>
+    
+{% endblock %}
