@@ -10,4 +10,5 @@ django-smart-selects
 django-phonenumber-field
 phonenumbers
 django_countries
+dotenv
 
