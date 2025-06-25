@@ -483,7 +483,27 @@
             margin-bottom: 10px;
             color: #333;
         }
-        
+        .cart-link {
+        position: relative;
+        display: inline-block;
+        }
+
+        .cart-icon {
+            font-size: 24px; /* adjust size as needed */
+            color: #333;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
         .payment-icons,
         .social-icons {
             display: flex;
@@ -731,7 +751,7 @@
                     <a href="#">Register</a>
                     <a href="#">Profile</a>
                     <a href="#">Orders</a>
-                    <a href="#">Wishlist</a>
+                    <a href="{% url 'wishlist_view' %}">Wishlist</a>
                     <a href="#">Logout</a>
                 </div>
                 {% else %}
@@ -762,16 +782,23 @@
                     <a href="#">Live Chat</a>
                 </div>
             </div>
-            
+            <div class ="wishlist-nav">
+                <button id="wishlist-toggle" class="relative z-50">
+                    <i class="fas fa-heart text-orange-600 text-xl"></i>
+                </button>
+            </div>
             <div class="cart">
-                <i class="fas fa-shopping-cart"></i>
-                <a href="#">Cart(<span class="cart-count" id ="cart-count">{{ cart_total_items }}</span>)</a>
+                <a href="{% url 'cart' %}" class="cart-link">
+                    <i class="fa fa-shopping-cart cart-icon"></i>
+                    <span class="cart-count" id="cart-count">{{ cart_total_items }}</span>
+                </a>
             </div>
         </div>
     </header>
     
     <div class="home-navigation">
-        Home  
+
+        <a href="{% url 'home' %}" style ="text-decoration:none;">Home</a> 
         {% if current_category %}>{{ current_category|title }}{% endif %}
         {% if current_subcategory %} > {{ current_subcategory|title }}{% endif %}
     </div>
@@ -862,8 +889,45 @@
             <p>&copy; 2025 Buyzaar Nigeria. All Rights Reserved.</p>
         </div>
     </footer>
-    
+    <!-- Wishlist/Login iframe modal -->
+    <div id="wishlist-iframe-container" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden flex items-center justify-center">
+    <div class="relative w-full max-w-4xl h-[80vh] bg-white shadow-lg rounded-xl overflow-hidden">
+        <iframe id="wishlist-iframe" src="" class="w-full h-full border-0"></iframe>
+        <button id="wishlist-close" class="absolute top-2 right-2 bg-gray-100 rounded-full p-2 hover:bg-gray-200">
+        <i class="fas fa-times text-gray-600"></i>
+        </button>
+    </div>
+    </div>
     <!-- JavaScript -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+        const wishlistBtn = document.getElementById("wishlist-toggle");
+        const iframeContainer = document.getElementById("wishlist-iframe-container");
+        const iframe = document.getElementById("wishlist-iframe");
+        const closeBtn = document.getElementById("wishlist-close");
+
+        const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+
+        wishlistBtn.addEventListener("click", () => {
+            iframe.src = isAuthenticated ? "{% url 'wishlist_view' %}" : "{% url 'product_list' %}?next={% url 'wishlist_view' %}";
+            iframeContainer.classList.remove("hidden");
+        });
+
+        closeBtn.addEventListener("click", () => {
+            iframeContainer.classList.add("hidden");
+            iframe.src = "";
+        });
+
+        // Optional: close modal when clicking outside the iframe
+        iframeContainer.addEventListener("click", (e) => {
+            if (e.target === iframeContainer) {
+            iframeContainer.classList.add("hidden");
+            iframe.src = "";
+            }
+        });
+        });
+        </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Menu toggle

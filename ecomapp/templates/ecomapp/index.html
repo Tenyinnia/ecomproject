@@ -167,15 +167,17 @@
                                 <span class="text-gray-400">No Image</span>
                             </div>
                             {% endif %}
-                        </a>
-                        
+                      
+
+
                         <!-- Favorite Button -->
-                        <button class="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-red-50"
-                                hx-post="#"
-                                hx-swap="outerHTML">
-                            <i class="{% if product in user_wishlist %}fas fa-heart text-red-500{% else %}far fa-heart text-gray-400{% endif %}"></i>
+
+                        <button 
+                            class="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md wishlist-btn z-10"
+                            data-product-id="{{ product.id }}"
+                            type="button">
+                            <i class="{% if product.id in wishlist_product_ids %}fas fa-heart text-red-500{% else %}far fa-heart text-gray-400{% endif %}"></i>
                         </button>
-                        
                         {% if product.discount_percentage %}
                         <div class="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
                             -{{ product.discount_percentage }}%
@@ -279,6 +281,46 @@
         evt.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
     });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    document.querySelectorAll(".wishlist-btn").forEach(button => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const icon = this.querySelector("i");
+            const productId = this.dataset.productId;
+
+            // Send AJAX request to toggle wishlist
+            fetch("{% url 'toggle_wishlist' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrfToken
+                },
+                body: `product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "added") {
+                    icon.classList.remove("far", "text-gray-400");
+                    icon.classList.add("fas", "text-red-500");
+                } else if (data.status === "removed") {
+                    icon.classList.remove("fas", "text-red-500");
+                    icon.classList.add("far", "text-gray-400");
+                }
+            })
+            .catch(error => {
+                console.error("Error toggling wishlist:", error);
+            });
+        });
+    });
+});
+</script>
+
+
 
 <style>
     .home-navigation {

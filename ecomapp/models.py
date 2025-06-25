@@ -121,8 +121,6 @@ class OtpToken(models.Model):
         if not self.otp_code:  # Generate OTP only if it's not already set
             self.otp_code = self.generate_unique_otp()
         super().save(*args, **kwargs)
-from django.db import models
-
 
 CATEGORY_CHOICES = [
     ("appliances", "Appliances"),
@@ -267,16 +265,12 @@ class Cart(models.Model):
     session_key = models.CharField(max_length=40, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def total_items(self):
         return sum(item.quantity for item in self.items.all())
 
     def total_price(self):
-        return sum(item.price * item.quantity for item in self.items.all())
-    
-    @property
-    def subtotal(self):
-        return self.price * self.quantity
+        return sum(item.subtotal for item in self.items.all())
 
     def __str__(self):
         return f"Cart ({self.user or self.session_key}) - {self.total_items()} items"
@@ -285,7 +279,14 @@ class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2)  # Snapshot of price at time of addition
+    price = models.DecimalField(max_digits=10, decimal_places=2)  # price at time of adding to cart
+
+    @property
+    def subtotal(self):
+        return self.price * self.quantity
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity} in cart"
 
     class Meta:
         unique_together = ('cart', 'product')
@@ -322,43 +323,14 @@ class RegistrationProgress(models.Model):
 
     def progress_percentage(self):
         return (self.step / 5) * 100  # Adjust based on the number of steps
-# class Product(models.Model):
-#     productName = models.CharField(max_length=250)
-#     quantity = models.IntegerField()
-#     price = models.DecimalField(max_digits=10, decimal_places=2)
-#     description=models.CharField(max_length=150)
-#     image = models.ImageField(upload_to='images/')
-#     stock = models.PositiveIntegerField()
-#     quantity = models.IntegerField()
-    
-#     def __str__(self):
-#         return self.productName
-    
-#     def save(self, *args, **kwargs):
-#         # On creation, set stock equal to initial_quantity
-#         if not self.pk:  # Check if it's a new instance
-#             self.stock = self.quantity
-#         else:
-#             # For existing products, keep the current stock or update it
-#             self.stock += kwargs.pop('add_stock', 0)  # Increment stock if specified
-
-#         super().save(*args, **kwargs)  # Call the original save method
-        
-#     def is_in_stock(self):
-#         return self.stock > 0
-#     def get_absolute_url(self):
-#         return reverse('home')
-    
 
     
-# class CartItem(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-#     quantity = models.PositiveIntegerField(default=1)
+class Wishlist(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
-#     def __str__(self):
-#         return f"{self.quantity} of {self.product.productName}"
+    class Meta:
+        unique_together = ('user', 'product')  # to avoid duplicates
 
-#     def get_total_price(self):
-#         return self.quantity * self.product.price
-    
+    def __str__(self):
+        return f"{self.user} - {self.product}"

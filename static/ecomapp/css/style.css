@@ -259,6 +259,17 @@ form {
     background-color: #b52a3b;
 }
 
+.wishlist-btn {
+  background-color: white;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.wishlist-btn.active {
+  background-color: red;
+  color: white;
+}
 
 h2 {
     text-align: center;
@@ -311,3 +322,4 @@ header {
     bottom: 0
 }
 }
+

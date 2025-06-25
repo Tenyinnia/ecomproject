@@ -1,0 +1,80 @@
+{% load humanize %}
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Wishlist</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex flex-col items-center justify-between min-h-screen py-8">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-items-center">
+        {% for item in wishlist_items %}
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden w-[90%] sm:w-[60%] max-w-sm">
+            <!-- Image with Padding -->
+            <div class="p-2">
+                <a href="{% url 'product_detail' item.product.slug %}">
+                    {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}"
+                        class="w-full h-36 object-cover rounded-md">
+                    {% else %}
+                    <div class="w-full h-36 bg-gray-200 flex items-center justify-center rounded-md">
+                        <span class="text-gray-400">No Image</span>
+                    </div>
+                    {% endif %}
+                </a>
+            </div>
+
+            <!-- Discount Badge -->
+            {% if item.product.discount_percentage %}
+            <div class="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+                -{{ item.product.discount_percentage }}%
+            </div>
+            {% endif %}
+
+            <!-- Product Info -->
+            <div class="px-3 pb-3 text-left text-sm">
+                <h3 class="font-semibold text-gray-800 leading-snug mb-1 line-clamp-2">{{ item.product.title }}</h3>
+
+                {% if item.product.brand %}
+                <p class="text-gray-500 text-xs mb-1">{{ item.product.brand.name }}</p>
+                {% endif %}
+
+                <div class="flex items-center space-x-2 mb-1">
+                    {% if item.product.discounted_price %}
+                    <span class="font-bold text-gray-800 text-sm">₦{{ item.product.discounted_price|intcomma }}</span>
+                    <span class="line-through text-gray-400 text-xs">₦{{ item.product.price|intcomma }}</span>
+                    {% else %}
+                    <span class="font-bold text-gray-800 text-sm">₦{{ item.product.price|intcomma }}</span>
+                    {% endif %}
+                </div>
+
+                {% if item.product.discount_percentage %}
+                <p class="text-xs text-green-600 mb-1">Save ₦{{ item.product.price_saving|intcomma }}</p>
+                {% endif %}
+
+                {% if item.product.description %}
+                <p class="text-xs text-gray-600 line-clamp-2 mb-2">{{ item.product.description }}</p>
+                {% endif %}
+
+                <!-- Add to Cart -->
+                <form method="post" action="{% url 'add_to_cart' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit"
+                            class="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs py-2 rounded">
+                        Add to Cart
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+
+</body>
+</html>

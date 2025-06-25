@@ -83,9 +83,11 @@ from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, Count, Min, Max
 from django.core.paginator import Paginator
-from .models import Product, Category, SubCategory, Brand
+from .models import Product, Category, SubCategory, Brand, Wishlist
 from taggit.models import Tag
 from django.db import transaction
+from django.views.decorators.http import require_POST
+
 def home(request):
     category_slug = request.GET.get('category')
     subcategory_slug = request.GET.get('subcategory')
@@ -477,10 +479,41 @@ def resend_otp(request):
     
 #     cart_count = CartItem.objects.filter(user=request.user).count()
 #     return JsonResponse({'cart_count': cart_count})
+def get_user_cart(request):
+    """
+    Returns the cart for the current session or authenticated user.
+    Creates one if it doesn't exist.
+    """
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user)
+    else:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+        cart, created = Cart.objects.get_or_create(session_key=session_key)
+    return cart
 
-# def get_cart_count(request):
-#     cart_count = CartItem.objects.filter(user=request.user).count()
-#     return JsonResponse({'cart_count': cart_count})
+def view_cart(request):
+    # Determine cart based on authentication
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user)
+    else:
+        # Ensure session has a key
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+        cart, created = Cart.objects.get_or_create(session_key=session_key)
+
+    cart_items = cart.items.select_related('product')
+    total_price = cart.total_price()
+
+    context = {
+        'cart_items': cart_items,
+        'total_price': total_price
+    }
+    return render(request, 'ecomapp/cart.html', context)
 
 
 # def cart_view(request):
@@ -512,33 +545,43 @@ def resend_otp(request):
 #         #return redirect('ecomapp/product_confirm_delete.html')
 # def home(request):
 #     return render (request, 'highSchoolApp/base.html')
-@transaction.atomic
-def add_to_cart(request):
-    if request.method == 'POST':
-        try:
-            product_id = request.POST.get('product_id')
-            quantity = int(request.POST.get('quantity', 1))
-            
-            # Get product (or return 404 if not found)
-            product = Product.objects.get(id=product_id)
-            
-            # Add to cart (example logic)
-            cart, created = Cart.objects.get_or_create(user=request.user)
-            cart.items.add(product, through_defaults={'quantity': quantity})
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Product added to cart!',
-                'cart_total': cart.total_items(),
-            })
-        
-        except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
-        
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+def remove_from_cart(request, item_id):
+    if request.user.is_authenticated:
+        cart = get_object_or_404(Cart, user=request.user)
+    else:
+        cart = get_object_or_404(Cart, session_key=request.session.session_key)
+
+    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    item.delete()
     
-    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+    return redirect('cart') 
+
+@require_POST
+def add_to_cart(request):
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+    else:
+        session_key = request.session.session_key or request.session.create()
+        cart, _ = Cart.objects.get_or_create(session_key=session_key)
+
+    product_id = request.POST.get("product_id")
+    qty = int(request.POST.get("quantity", 1))
+    product = get_object_or_404(Product, id=product_id)
+
+    # Use discounted price if available
+    unit_price = product.discounted_price  if product.discounted_price else product.price
+
+    item, created = CartItem.objects.get_or_create(cart=cart, product=product, defaults={
+        'quantity': qty,
+        'price': unit_price
+    })
+
+    if not created:
+        item.quantity += qty
+        item.save()
+
+    return redirect(request.META.get("HTTP_REFERER", "home"))
+
 
 def create_product(request):
     if request.method == 'POST':
@@ -551,8 +594,6 @@ def create_product(request):
         )
         product.tags.add("new", "featured", "hot-sale")
         
-from django.http import JsonResponse
-from .models import SubCategory
 
 def get_subcategories(request):
     category_id = request.GET.get('category_id')
@@ -644,7 +685,11 @@ def product_list(request):
         min_price=Min('price'),
         max_price=Max('price')
     )
-    
+    wishlist_product_ids = []
+
+    if request.user.is_authenticated:
+        wishlist_product_ids = Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
+
     context = {
         'products': page_obj,
         'categories': categories,
@@ -658,6 +703,7 @@ def product_list(request):
         'query': query,
         'min_price': price_range['min_price'],
         'max_price': price_range['max_price'],
+        'wishlist_product_ids': wishlist_product_ids
     }
     
     return render(request, 'ecomapp/product_list.html', context)
@@ -676,3 +722,23 @@ def product_detail(request, slug):
     }
     
     return render(request, 'ecomapp/product_details.html', context)
+
+
+@require_POST
+@login_required
+def toggle_wishlist(request):
+    product_id = request.POST.get("product_id")
+    product = Product.objects.get(id=product_id)
+
+    wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+
+    if not created:
+        wishlist_item.delete()
+        return JsonResponse({"status": "removed"})
+    else:
+        return JsonResponse({"status": "added"})
+    
+@login_required
+def wishlist_view(request):
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
+    return render(request, 'ecomapp/wishlist.html', {'wishlist_items': wishlist_items})

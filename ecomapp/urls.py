@@ -15,6 +15,9 @@ urlpatterns = [
     path('products/', views.product_list, name='product_list'),
     path('product/<slug:slug>/', views.product_detail, name='product_detail'),
     path('api/add-to-cart/', views.add_to_cart, name='add_to_cart'),
+    path('wishlist/toggle/', views.toggle_wishlist, name='toggle_wishlist'),
+    path('my_wishlist/', views.wishlist_view, name='wishlist_view'),
+
     # path('admin/superuser/', views.SuperuserPageView.as_view(), name='superuser_page'),
     # path('admin/regular/', views.RegularAdminPageView.as_view(), name='regular_admin_page'),
     # path('', views.home, name ='home'),
@@ -27,6 +30,7 @@ urlpatterns = [
     # path('login/', views.login_view, name='login'),
     # path('logout/', views.logout_view, name='logout'),
     # path('remove-from-cart/<int:id>/', views.remove_from_cart, name='remove-from-cart'),
-    # path('cart-count/', views.get_cart_count, name='cart-count'),
-    # path('cart/', views.cart_view, name='cart'),
+    
+    path('cart/', views.view_cart, name='cart'),
+    path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
 ]

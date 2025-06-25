@@ -2,57 +2,56 @@
 {% load humanize %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Breadcrumbs -->
+<div class="w-full flex justify-center py-8 px-4">
+    <div class="w-full max-w-6xl flex flex-col md:flex-row gap-8 bg-white p-6 rounded-lg shadow-md">
 
-    <div class="flex flex-col md:flex-row gap-8">
-        <!-- Product Images -->
-        <div class="w-full md:w-1/2 bg-white p-4 rounded-lg shadow">
-            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full rounded">
+        <!-- Product Image -->
+        <div class="w-full md:w-1/2 flex justify-center items-start">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full max-w-md rounded shadow">
         </div>
 
         <!-- Product Info -->
         <div class="w-full md:w-1/2">
             <h1 class="text-2xl font-bold">{{ product.name }}</h1>
-            <div class="mt-2 text-gray-500">SKU: {{ product.sku }}</div>
-
+            <div class="mt-2">
+                <p class="mt-2 text-gray-700 text-sm leading-relaxed">{{ product.description }}</p>
+            </div>
             <div class="mt-4">
                 {% if product.discounted_price %}
-                <div class="text-3xl font-bold jumia-text">₦{{ product.discounted_price|intcomma }}</div>
+                <div class="text-2xl font-bold text-orange-600">₦{{ product.discounted_price|intcomma }}</div>
                 <div class="text-lg text-gray-500 line-through">₦{{ product.price|intcomma }}</div>
-                <div class="text-green-600">Save ₦{{ product.price_saving|intcomma }} ({{ product.discount_percentage }}% off)</div>
+                <div class="text-green-600 text-sm">Save ₦{{ product.price_saving|intcomma }} ({{ product.discount_percentage }}% off)</div>
                 {% else %}
-                <div class="text-3xl font-bold jumia-text">₦{{ product.price|intcomma }}</div>
+                <div class="text-3xl font-bold text-orange-600">₦{{ product.price|intcomma }}</div>
                 {% endif %}
             </div>
-
-            <!-- Add to Cart -->
-            <form class="add-to-cart-form" method="post" data-url="{% url 'add_to_cart' %}">
+            <!-- Product Description -->
+            <form method="post" action="{% url 'add_to_cart' %}" class="mt-8">
                 {% csrf_token %}
+                <h4>Qty:</h4>
                 <input type="hidden" name="product_id" value="{{ product.id }}">
-                <input type="number" name="quantity" value="1" min="1" />
-                <button type="submit" class="w-full jumia-bg text-white py-3 px-6 rounded-lg font-bold hover:bg-orange-600">
-                    ADD TO CART
-                </button>
+                <input type="number" name="quantity" value="1" min="1" class="w-24 px-3 py-2 border rounded mb-2">
+                <div class="flex flex-col gap-3 mt-6">
+                    <button type="submit"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded text-sm font-semibold">
+                        Add to Cart
+                    </button>
+                    <button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded text-sm font-semibold">
+                        PURCHASE NOW
+                    </button>
+                </div>
             </form>
-
-            <!-- Product Details -->
-            <div class="mt-8">
-                <h3 class="text-lg font-semibold">Product Details</h3>
-                <p class="mt-2 text-gray-700">{{ product.description }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Related Products -->
-    <div class="mt-12">
-        <h2 class="text-xl font-bold mb-4">You May Also Like</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {% for related in related_products %}
-            <!-- Product card similar to product_list.html -->
-            {% endfor %}
         </div>
     </div>
 </div>
 
+<!-- Related Products -->
+<div class="mt-12 w-full max-w-6xl mx-auto px-4">
+    <h2 class="text-xl font-bold mb-4">You May Also Like</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for related in related_products %}
+        <!-- Add related product card here -->
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
